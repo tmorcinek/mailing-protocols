@@ -1,6 +1,5 @@
 import java.io.*
 import java.net.InetAddress
-import java.net.Socket
 import java.net.UnknownHostException
 import java.util.*
 import javax.net.ssl.SSLSocketFactory
@@ -25,8 +24,8 @@ object SMTPDemo {
     internal class SMTP(host: String?) {
         var mailHost: InetAddress
         var localhost: InetAddress
-        var `in`: BufferedReader? = null
-        var out: PrintWriter? = null
+        var inputStream: BufferedReader? = null
+        var outputStream: PrintWriter? = null
 
         init {
             mailHost = InetAddress.getByName(host)
@@ -38,79 +37,68 @@ object SMTPDemo {
 
         @Throws(IOException::class)
         fun send(msgFileReader: FileReader?, from: String, to: String): Boolean {
-            val smtpPipe: Socket
-            val inn: InputStream?
-            val outt: OutputStream?
-            val msg: BufferedReader
-            msg = BufferedReader(msgFileReader)
-//            smtpPipe = Socket(mailHost, SMTP_PORT)
-            val socketFactory = SSLSocketFactory.getDefault()
-            smtpPipe = socketFactory.createSocket(mailHost, SMTP_PORT)
-            inn = smtpPipe.getInputStream()
-            outt = smtpPipe.getOutputStream()
-            `in` = BufferedReader(InputStreamReader(inn))
-            out = PrintWriter(OutputStreamWriter(outt), true)
-            if (inn == null || outt == null) {
-                println("Failed to open streams to socket.")
-                return false
-            }
-            val initialID = `in`!!.readLine()
+            val msg = BufferedReader(msgFileReader)
+            val smtpPipe = SSLSocketFactory.getDefault().createSocket(mailHost, SMTP_PORT)
+            inputStream = BufferedReader(InputStreamReader(smtpPipe.getInputStream()))
+            outputStream = PrintWriter(OutputStreamWriter(smtpPipe.getOutputStream()), true)
+            val initialID = inputStream!!.readLine()
             println(initialID)
             println("HELO " + localhost.hostName)
-            out!!.println("HELO " + localhost.hostName)
-            val welcome = `in`!!.readLine()
+            outputStream!!.println("HELO " + localhost.hostName)
+            val welcome = inputStream!!.readLine()
             println("Server: $welcome")
 
             println("AUTH PLAIN")
-            out!!.println("AUTH PLAIN")
-            println("Server: ${`in`!!.readLine()}")
+            outputStream!!.println("AUTH PLAIN")
+            println("Server: ${inputStream!!.readLine()}")
 
             val encodedCredentails = encodeCredentials("morcinek@student.agh.edu.pl", "")
             println("Encoded: $encodedCredentails")
-            out!!.println("$encodedCredentails")
-            println("Server: ${`in`!!.readLine()}")
+            outputStream!!.println("$encodedCredentails")
+            println("Server: ${inputStream!!.readLine()}")
 
             println("MAIL From:<$from>")
-            out!!.println("MAIL From:<$from>")
-            val senderOK = `in`!!.readLine()
+            outputStream!!.println("MAIL From:<$from>")
+            val senderOK = inputStream!!.readLine()
             println(senderOK)
             println("RCPT TO:<$to>")
-            out!!.println("RCPT TO:<$to>")
-            val recipientOK = `in`!!.readLine()
+            outputStream!!.println("RCPT TO:<$to>")
+            val recipientOK = inputStream!!.readLine()
             println(recipientOK)
-            out!!.println("DATA")
-            val afterData = `in`!!.readLine()
+            outputStream!!.println("DATA")
+            val afterData = inputStream!!.readLine()
             println("Accepted: " + afterData)
 
 
-            out!!.println("From: $from")
+            outputStream!!.println("From: $from")
             println("From: $from")
 
-            out!!.println("To: $to")
+            outputStream!!.println("To: $to")
             println("To: $to")
 
-            out!!.println("Subject: Test message")
+            outputStream!!.println("Subject: New Message")
             println("Subject: Test message")
 
-            out!!.println("")
+            outputStream!!.println("")
             println("")
 
             var line: String?
             while (msg.readLine().also { line = it } != null) {
-                out!!.println(line)
+                outputStream!!.println(line)
                 println(line)
             }
-            out!!.println(".")
+            outputStream!!.println(".")
             println(".")
 
-            val acceptedOK = `in`!!.readLine()
+            val acceptedOK = inputStream!!.readLine()
             println("Accepted: " + acceptedOK)
             println("QUIT")
-            out!!.println("QUIT")
+            outputStream!!.println("QUIT")
             return true
         }
 
-        private fun encodeCredentials(login: String, password: String) = Base64.getEncoder().encodeToString("\u0000$login\u0000$password".encodeToByteArray())
+        private fun encodeCredentials(login: String, password: String) =
+            Base64.getEncoder().encodeToString("\u0000$login\u0000$password".encodeToByteArray())
 
         companion object {
             private const val SMTP_PORT = 465
