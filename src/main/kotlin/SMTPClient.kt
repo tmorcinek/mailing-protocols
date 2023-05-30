@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
     smtpClient.login("morcinek@student.agh.edu.pl", "")
-    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", "New Client working.", FileReader("file.txt"))
+    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", "tomasz.morcinek@icloud.com", "tomasz.morcinek.coach@gmail.com", "New Client working.", FileReader("file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -32,16 +32,26 @@ class SMTPClient(host: String, port: Int) {
         readServerMessage()
     }
 
-    fun sendEmail(from: String, to: String, subject: String, msgFileReader: FileReader? = null) {
+    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, msgFileReader: FileReader? = null) {
         sendMessage("MAIL From:<$from>")
         readServerMessage()
         sendMessage("RCPT TO:<$to>")
         readServerMessage()
+        if (cc != null) {
+            sendMessage("RCPT TO:<$cc>")
+            readServerMessage()
+        }
+        if (bcc != null) {
+            sendMessage("RCPT TO:<$bcc>")
+            readServerMessage()
+        }
+
         sendMessage("DATA")
         readServerMessage()
-
         sendMessage("From: $from")
         sendMessage("To: $to")
+        sendMessage("Cc: $cc")
+        sendMessage("Bcc: $bcc")
         sendMessage("Subject: $subject")
 
         msgFileReader?.let {
