@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
     smtpClient.login("morcinek@student.agh.edu.pl", "")
-    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", null, null, "New Client working.", FileReader("file.txt"))
+    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", null, null, "New Client working.", "This is message", FileReader("file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -32,7 +32,7 @@ class SMTPClient(host: String, port: Int) {
         readServerMessage()
     }
 
-    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, msgFileReader: FileReader? = null) {
+    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, message: String, msgFileReader: FileReader? = null) {
         sendMessage("MAIL From:<$from>")
         readServerMessage()
         sendMessage("RCPT TO:<$to>")
@@ -57,12 +57,25 @@ class SMTPClient(host: String, port: Int) {
             sendMessage("Bcc: $bcc")
         }
         sendMessage("Subject: $subject")
-        msgFileReader?.let {
-            val msg = BufferedReader(msgFileReader)
-            var line: String?
-            while (msg.readLine().also { line = it } != null) {
-                sendMessage(line!!)
+        sendMessage(
+            "Content-Type: multipart/alternative; boundary=sep\n" +
+                    "--sep\n" +
+                    "${message}\n" +
+                    "--sep"
+        )
+        if (msgFileReader != null) {
+            sendMessage(
+                    "Content-Type: text/plain; charset=\"iso-8859-1\"\n" +
+                    "Content-Disposition: attachment; filename=\"text.txt\"\n" +
+                    "Content-Transfer-Encoding: 8bit\n")
+            msgFileReader.let {
+                val msg = BufferedReader(msgFileReader)
+                var line: String?
+                while (msg.readLine().also { line = it } != null) {
+                    sendMessage(line!!)
+                }
             }
+            sendMessage("--sep--\n")
         }
         sendMessage(".")
         readServerMessage()
