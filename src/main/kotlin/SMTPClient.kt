@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
     smtpClient.login("morcinek@student.agh.edu.pl", "")
-    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", "tomasz.morcinek@icloud.com", "tomasz.morcinek.coach@gmail.com", "New Client working.", FileReader("file.txt"))
+    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", null, null, "New Client working.", FileReader("file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -50,10 +50,13 @@ class SMTPClient(host: String, port: Int) {
         readServerMessage()
         sendMessage("From: $from")
         sendMessage("To: $to")
-        sendMessage("Cc: $cc")
-        sendMessage("Bcc: $bcc")
+        if (cc != null) {
+            sendMessage("Cc: $cc")
+        }
+        if (bcc != null) {
+            sendMessage("Bcc: $bcc")
+        }
         sendMessage("Subject: $subject")
-
         msgFileReader?.let {
             val msg = BufferedReader(msgFileReader)
             var line: String?
