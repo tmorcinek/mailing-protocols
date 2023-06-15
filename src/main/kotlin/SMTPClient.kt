@@ -64,11 +64,13 @@ class SMTPClient(host: String, port: Int) {
                     "${message}\n" +
                     "--sep"
         )
-        sendMessage(
-                    "Content-Type: text/html; charset=utf-8\n\n"+
-                    "${html}\n" +
-                    "--sep"
-        )
+        if(html!="") {
+            sendMessage(
+                "Content-Type: text/html; charset=utf-8\n\n" +
+                        "${html}\n" +
+                        "--sep"
+            )
+        }
         if (msgFileReader != null) {
             sendMessage(
                     "Content-Type: text/plain; charset=\"iso-8859-1\"\n" +
