@@ -8,8 +8,8 @@ fun main(args: Array<String>) {
 
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
-    smtpClient.login("morcinek@student.agh.edu.pl", "")
-    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "tomasz.morcinek@gmail.com", null, null, "New Client working.", "This is message", FileReader("file.txt"))
+    smtpClient.login("bprzechera@student.agh.edu.pl", "")
+    smtpClient.sendEmail("bprzechera@student.agh.edu.pl", "bprzechera@student.agh.edu.pl", null, null, "New Client working.", "This is message","<html><body><b>ala ma kota w boldzie</b></body></html>", FileReader("./file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -32,7 +32,7 @@ class SMTPClient(host: String, port: Int) {
         readServerMessage()
     }
 
-    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, message: String, msgFileReader: FileReader? = null) {
+    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, message: String, html: String,  msgFileReader: FileReader? = null) {
         sendMessage("MAIL From:<$from>")
         readServerMessage()
         sendMessage("RCPT TO:<$to>")
@@ -58,16 +58,22 @@ class SMTPClient(host: String, port: Int) {
         }
         sendMessage("Subject: $subject")
         sendMessage(
-            "Content-Type: multipart/alternative; boundary=sep\n" +
+            "Content-Type: multipart/alternative; boundary=sep\n\n" +
                     "--sep\n" +
+                    "Content-Type: text/plain; charset=utf-8\n\n"+
                     "${message}\n" +
+                    "--sep"
+        )
+        sendMessage(
+                    "Content-Type: text/html; charset=utf-8\n\n"+
+                    "${html}\n" +
                     "--sep"
         )
         if (msgFileReader != null) {
             sendMessage(
                     "Content-Type: text/plain; charset=\"iso-8859-1\"\n" +
                     "Content-Disposition: attachment; filename=\"text.txt\"\n" +
-                    "Content-Transfer-Encoding: 8bit\n")
+                    "Content-Transfer-Encoding: 8bit\n\n")
             msgFileReader.let {
                 val msg = BufferedReader(msgFileReader)
                 var line: String?

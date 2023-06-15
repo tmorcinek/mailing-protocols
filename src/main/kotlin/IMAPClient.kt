@@ -91,7 +91,7 @@ class IMAPClient(host: String, port: Int) {
         val fromRegex = """From:.*\n""".toRegex()
         val toRegex = """To:.*\n""".toRegex()
         val dateRegex = """Date:.*\n""".toRegex()
-        val boundaryRegex = "--.*=_.*\n".toRegex()
+        val boundaryRegex = "--.*\n".toRegex()
         val contentTypeRegex="Content-Type:.*;".toRegex()
         val contentEncodingRegex="Content-Transfer-Encoding:.*\n".toRegex()
         val contentNameRegex="name=\".*\"\n".toRegex()
@@ -120,9 +120,7 @@ class IMAPClient(host: String, port: Int) {
         else
             boundary=boundary_temp.value.replace("boundary=","").replace("\"","").replace("\n","")
         var text_pieces:List<String> =body_text.split(boundary)
-//        println("----------------------------------")
-//        println(body_text)
-//        println("----------------------------------")
+
         for (tp in text_pieces) {
             var temp=contentTypeRegex.find(tp)
             if (temp!=null) {
@@ -141,8 +139,8 @@ class IMAPClient(host: String, port: Int) {
 //                            println(content)
 //                            println("------------------content-----------------")
                         }else{
-                            text+=tp.split("[\r\n]{3}".toRegex()).drop(1).joinToString("\n\n\n")
-                            println(text)
+                            text+=tp.split("[\r\n]{2}".toRegex()).drop(1).joinToString("\n\n")
+//                            println(text)
                         }
                     }
                     "text/html"->{
