@@ -59,16 +59,16 @@ class SMTPClient(host: String, port: Int) {
         sendMessage("Subject: $subject")
         sendMessage(
             "Content-Type: multipart/alternative; boundary=sep\n\n" +
-                    "--sep\n" +
+                    "--=_sep\n" +
                     "Content-Type: text/plain; charset=utf-8\n\n"+
                     "${message}\n" +
-                    "--sep"
+                    "--=_sep"
         )
         if(html!="") {
             sendMessage(
                 "Content-Type: text/html; charset=utf-8\n\n" +
                         "${html}\n" +
-                        "--sep"
+                        "--=_sep"
             )
         }
         if (msgFileReader != null) {
@@ -83,7 +83,7 @@ class SMTPClient(host: String, port: Int) {
                     sendMessage(line!!)
                 }
             }
-            sendMessage("--sep--\n")
+            sendMessage("--=_sep--\n")
         }
         sendMessage(".")
         readServerMessage()

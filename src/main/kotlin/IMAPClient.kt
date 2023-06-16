@@ -91,7 +91,7 @@ class IMAPClient(host: String, port: Int) {
         val fromRegex = """From:.*\n""".toRegex()
         val toRegex = """To:.*\n""".toRegex()
         val dateRegex = """Date:.*\n""".toRegex()
-        val boundaryRegex = "--.*\n".toRegex()
+        val boundaryRegex = "--.*=_.*\n".toRegex()
         val contentTypeRegex="Content-Type:.*;".toRegex()
         val contentEncodingRegex="Content-Transfer-Encoding:.*\n".toRegex()
         val contentNameRegex="name=\".*\"\n".toRegex()
@@ -119,68 +119,81 @@ class IMAPClient(host: String, port: Int) {
             boundary=""
         else
             boundary=boundary_temp.value.replace("boundary=","").replace("\"","").replace("\n","")
-        var text_pieces:List<String> =body_text.split(boundary)
+        if (boundary!="") {
+            var text_pieces: List<String> = body_text.split(boundary)
 
-        for (tp in text_pieces) {
-            var temp=contentTypeRegex.find(tp)
-            if (temp!=null) {
-                var contentType:String=temp.value.replace("Content-Type: ","").split(";")[0]
+            for (tp in text_pieces) {
+                var temp = contentTypeRegex.find(tp)
+                if (temp != null) {
+                    var contentType: String = temp.value.replace("Content-Type: ", "").split(";")[0]
 //                println(tp)
 //                println(contentType)
-                when (contentType) {
-                    "text/plain"->{
-                        val name_temp=contentNameRegex.find(tp)
-                        if (name_temp != null){
-                            var name = name_temp.value.replace("name=\"", "").replace("\"\n", "")
-                            var content=tp.split("\n\n").drop(1).joinToString("\n\n")
-                            File("./"+name).writeText(content)
-                            filelist.add("./"+name)
+                    when (contentType) {
+                        "text/plain" -> {
+                            val name_temp = contentNameRegex.find(tp)
+                            if (name_temp != null) {
+                                var name = name_temp.value.replace("name=\"", "").replace("\"\n", "")
+                                var content = tp.split("\n\n").drop(1).joinToString("\n\n")
+                                File("./" + name).writeText(content)
+                                filelist.add("./" + name)
 //                            println("------------------content-----------------")
 //                            println(content)
 //                            println("------------------content-----------------")
-                        }else{
-                            text+=tp.split("[\r\n]{2}".toRegex()).drop(1).joinToString("\n\n")
+                            } else {
+                                text += tp.split("[\r\n]{2}".toRegex()).drop(1).joinToString("\n\n")
 //                            println(text)
+                            }
                         }
-                    }
-                    "text/html"->{
-                        html+=tp.split("[\r\n]{2}".toRegex()).drop(1).joinToString("\n")
-                    }
-                    "multipart/mixed"->{
-                        val emin:Email=process_email(tp,tp,tp,tp)
-                        text+=emin.text
-                        html+=emin.html
-                        filelist.addAll(emin.filelist)
-                    }
-                    else->{
-                        if (contentType.contains("application", ignoreCase = true)||contentType.contains("image", ignoreCase = true)||contentType.contains("video", ignoreCase = true)) {
-                            val encoding_temp=contentEncodingRegex.find(tp)
-                            val name_temp=contentNameRegex.find(tp)
-                            val boundary_temp=boundaryRegex.find(tp)
-                            if (encoding_temp!=null && name_temp != null && boundary_temp!=null){
-                                var encoding=encoding_temp.value.replace("Content-Transfer-Encoding: ","").replace("\n","")
-                                if (encoding=="base64") {
-                                    var name = name_temp.value.replace("name=\"", "").replace("\"\n", "")
-                                    var fileBoundary =
-                                        boundary_temp.value.replace("Content-Transfer-Encoding: ", "").replace("\n", "")
-                                    var file =
-                                        tp.split("\n\n")[tp.split("\n\n").size - 1].split(fileBoundary)[0].replace(
-                                            "\n",
-                                            ""
-                                        )
-                                    saveBase64StringToFile(file, "./", name)
-                                    filelist.add("./"+ name)
-                                }
+                        "text/html" -> {
+                            html += tp.split("[\r\n]{2}".toRegex()).drop(1).joinToString("\n")
+                        }
+                        "multipart/mixed" -> {
+                            val emin: Email = process_email(tp, tp, tp, tp)
+                            text += emin.text
+                            html += emin.html
+                            filelist.addAll(emin.filelist)
+                        }
+                        else -> {
+                            if (contentType.contains("application", ignoreCase = true) || contentType.contains(
+                                    "image",
+                                    ignoreCase = true
+                                ) || contentType.contains("video", ignoreCase = true)
+                            ) {
+                                val encoding_temp = contentEncodingRegex.find(tp)
+                                val name_temp = contentNameRegex.find(tp)
+                                val boundary_temp = boundaryRegex.find(tp)
+                                if (encoding_temp != null && name_temp != null && boundary_temp != null) {
+                                    var encoding =
+                                        encoding_temp.value.replace("Content-Transfer-Encoding: ", "").replace("\n", "")
+                                    if (encoding == "base64") {
+                                        var name = name_temp.value.replace("name=\"", "").replace("\"\n", "")
+                                        var fileBoundary =
+                                            boundary_temp.value.replace("Content-Transfer-Encoding: ", "")
+                                                .replace("\n", "")
+                                        var file =
+                                            tp.split("\n\n")[tp.split("\n\n").size - 1].split(fileBoundary)[0].replace(
+                                                "\n",
+                                                ""
+                                            )
+                                        saveBase64StringToFile(file, "./", name)
+                                        filelist.add("./" + name)
+                                    }
 
 //                                println(encoding)
-                            }
+                                }
 
+                            }
                         }
                     }
                 }
             }
-        }
+        }else{
 
+            text=body_text.split("\n").drop(1).dropLast(2).joinToString("\n")
+        }
+//        println("------------------body_text-----------------")
+//        println(body_text)
+//        println("------------------body_text-----------------")
 //        println(emaillist)
 //        println(text_pieces[1])
         return Email(from,to,date,text,html,filelist)
