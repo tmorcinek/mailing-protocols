@@ -3,3 +3,5 @@ Hello world!
 This is a mail sent with Java!
 
 This is Tomasz
+
+This is a file with plain text.

@@ -9,11 +9,11 @@ fun main(args: Array<String>) {
     val imapClient = IMAPClient("poczta.agh.edu.pl", 993)
     imapClient.helo()
     imapClient.noop()
-    imapClient.login("bprzechera@student.agh.edu.pl", "")
+    imapClient.login("morcinek@student.agh.edu.pl", PASSWORD)
     imapClient.list()
 
     var last_id=imapClient.select("INBOX")
-    val email:Email=imapClient.get_mail("INBOX",last_id)
+    val email:Email=imapClient.get_mail("INBOX",(last_id.toInt()).toString())
     println(email)
 
 }

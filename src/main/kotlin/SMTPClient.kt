@@ -8,8 +8,8 @@ fun main(args: Array<String>) {
 
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
-    smtpClient.login("bprzechera@student.agh.edu.pl", "")
-    smtpClient.sendEmail("bprzechera@student.agh.edu.pl", "bprzechera@student.agh.edu.pl", null, null, "New Client working.", "This is message","<html><body><b>ala ma kota w boldzie</b></body></html>", FileReader("./file.txt"))
+    smtpClient.login("morcinek@student.agh.edu.pl", PASSWORD)
+    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "morcinek@student.agh.edu.pl", null, null, "New Client working.", "This is message","<html><body><b>ala ma kota w boldzie</b></body></html>", FileReader("./file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -59,16 +59,16 @@ class SMTPClient(host: String, port: Int) {
         sendMessage("Subject: $subject")
         sendMessage(
             "Content-Type: multipart/alternative; boundary=sep\n\n" +
-                    "--=_sep\n" +
+                    "--sep\n" +
                     "Content-Type: text/plain; charset=utf-8\n\n"+
                     "${message}\n" +
-                    "--=_sep"
+                    "--sep"
         )
         if(html!="") {
             sendMessage(
                 "Content-Type: text/html; charset=utf-8\n\n" +
                         "${html}\n" +
-                        "--=_sep"
+                        "--sep"
             )
         }
         if (msgFileReader != null) {
@@ -83,7 +83,7 @@ class SMTPClient(host: String, port: Int) {
                     sendMessage(line!!)
                 }
             }
-            sendMessage("--=_sep--\n")
+            sendMessage("--sep--\n")
         }
         sendMessage(".")
         readServerMessage()
