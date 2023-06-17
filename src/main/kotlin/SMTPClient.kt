@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
     val smtpClient = SMTPClient("poczta.agh.edu.pl", 465)
     smtpClient.helo()
     smtpClient.login("morcinek@student.agh.edu.pl", PASSWORD)
-    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "morcinek@student.agh.edu.pl", null, null, "New Client working.", "This is message","<html><body><b>ala ma kota w boldzie</b></body></html>", FileReader("./file.txt"))
+    smtpClient.sendEmail("morcinek@student.agh.edu.pl", "morcinek@student.agh.edu.pl", null, null, "New Client working.", SMTPClient.Text.HTML("<html><body><b>ala ma kota w boldzie</b></body></html>"), FileReader("./file.txt"))
 }
 
 class SMTPClient(host: String, port: Int) {
@@ -32,7 +32,7 @@ class SMTPClient(host: String, port: Int) {
         readServerMessage()
     }
 
-    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, message: String, html: String,  msgFileReader: FileReader? = null) {
+    fun sendEmail(from: String, to: String, cc: String?, bcc: String?, subject: String, text: Text, msgFileReader: FileReader? = null) {
         sendMessage("MAIL From:<$from>")
         readServerMessage()
         sendMessage("RCPT TO:<$to>")
@@ -60,17 +60,10 @@ class SMTPClient(host: String, port: Int) {
         sendMessage(
             "Content-Type: multipart/alternative; boundary=sep\n\n" +
                     "--sep\n" +
-                    "Content-Type: text/plain; charset=utf-8\n\n"+
-                    "${message}\n" +
+                    "Content-Type: text/${text.contentType}; charset=utf-8\n\n"+
+                    "${text.text}\n" +
                     "--sep"
         )
-        if(html!="") {
-            sendMessage(
-                "Content-Type: text/html; charset=utf-8\n\n" +
-                        "${html}\n" +
-                        "--sep"
-            )
-        }
         if (msgFileReader != null) {
             sendMessage(
                     "Content-Type: text/plain; charset=\"iso-8859-1\"\n" +
@@ -99,4 +92,9 @@ class SMTPClient(host: String, port: Int) {
     private fun readServerMessage() = println("Server > ${inputStream.readLine()}")
 
     private fun encodeCredentials(login: String, password: String) = Base64.getEncoder().encodeToString("\u0000$login\u0000$password".encodeToByteArray())
+
+    sealed class Text(val text: String, val contentType: String){
+        class HTML(text: String): Text(text, "html")
+        class Plain(text: String): Text(text, "plain")
+    }
 }
